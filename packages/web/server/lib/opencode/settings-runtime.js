@@ -73,6 +73,54 @@ export const createSettingsRuntime = (deps) => {
     }
   };
 
+  const filterDirectoriesByExistence = async (paths) => {
+    if (!Array.isArray(paths)) {
+      return paths;
+    }
+
+    const validations = paths.map(async (p) => {
+      if (typeof p !== 'string' || p.length === 0) {
+        return null;
+      }
+      try {
+        const stats = await fsPromises.stat(p);
+        if (!stats.isDirectory()) {
+          console.log(`[filterDirectoriesByExistence] Removing non-directory path: ${p}`);
+          return null;
+        }
+        return p;
+      } catch (error) {
+        const err = error;
+        if (err && typeof err === 'object' && err.code === 'ENOENT') {
+          console.log(`[filterDirectoriesByExistence] Removing non-existent path (ENOENT): ${p}`);
+          return null;
+        }
+        console.log(`[filterDirectoriesByExistence] Keeping path despite non-ENOENT error (${err.code || err.message || err}): ${p}`);
+        return p;
+      }
+    });
+
+    const results = (await Promise.all(validations)).filter((p) => p !== null);
+    return results;
+  };
+
+  const isExistingDirectory = async (candidatePath) => {
+    if (typeof candidatePath !== 'string' || candidatePath.length === 0) {
+      return false;
+    }
+    try {
+      const stats = await fsPromises.stat(candidatePath);
+      return stats.isDirectory();
+    } catch (error) {
+      const err = error;
+      if (err && typeof err === 'object' && err.code === 'ENOENT') {
+        return false;
+      }
+      console.log(`[isExistingDirectory] Assuming valid despite non-ENOENT error (${err.code || err.message || err}): ${candidatePath}`);
+      return true;
+    }
+  };
+
   const validateProjectEntries = async (projects) => {
     console.log(`[validateProjectEntries] Starting validation for ${projects.length} projects`);
 
@@ -394,6 +442,38 @@ export const createSettingsRuntime = (deps) => {
       } else if (next.activeProjectId) {
         console.log(`[persistSettings] No projects found, clearing activeProjectId ${next.activeProjectId}`);
         next = { ...next, activeProjectId: undefined };
+      }
+
+      if (Array.isArray(next.approvedDirectories)) {
+        const validated = await filterDirectoriesByExistence(next.approvedDirectories);
+        if (validated.length !== next.approvedDirectories.length) {
+          console.log(`[persistSettings] Filtered approvedDirectories: ${next.approvedDirectories.length} -> ${validated.length}`);
+        }
+        next = { ...next, approvedDirectories: validated };
+      }
+
+      if (Array.isArray(next.pinnedDirectories)) {
+        const validated = await filterDirectoriesByExistence(next.pinnedDirectories);
+        if (validated.length !== next.pinnedDirectories.length) {
+          console.log(`[persistSettings] Filtered pinnedDirectories: ${next.pinnedDirectories.length} -> ${validated.length}`);
+        }
+        next = { ...next, pinnedDirectories: validated };
+      }
+
+      if (typeof next.lastDirectory === 'string' && next.lastDirectory.length > 0) {
+        const exists = await isExistingDirectory(next.lastDirectory);
+        if (!exists) {
+          console.log(`[persistSettings] Clearing non-existent lastDirectory: ${next.lastDirectory}`);
+          next = { ...next, lastDirectory: undefined };
+        }
+      }
+
+      if (typeof next.homeDirectory === 'string' && next.homeDirectory.length > 0) {
+        const exists = await isExistingDirectory(next.homeDirectory);
+        if (!exists) {
+          console.log(`[persistSettings] Clearing non-existent homeDirectory: ${next.homeDirectory}`);
+          next = { ...next, homeDirectory: undefined };
+        }
       }
 
       if (Object.prototype.hasOwnProperty.call(sanitized, 'managedRemoteTunnelPresets')) {
