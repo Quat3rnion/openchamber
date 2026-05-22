@@ -187,7 +187,7 @@ export const PluginsPage: React.FC = () => {
             toast.success(result.message || t('settings.plugins.toast.updated'));
           }
         } else {
-          toast.error(t('settings.plugins.toast.reloadFailed'));
+          toast.error(result.message || t('settings.plugins.toast.reloadFailed'));
         }
       } finally {
         setIsSaving(false);
@@ -301,7 +301,7 @@ export const PluginsPage: React.FC = () => {
             toast.success(result.message || t('settings.plugins.toast.updated'));
           }
         } else {
-          toast.error(t('settings.plugins.toast.reloadFailed'));
+          toast.error(result.message || t('settings.plugins.toast.reloadFailed'));
         }
       } finally {
         setIsSaving(false);

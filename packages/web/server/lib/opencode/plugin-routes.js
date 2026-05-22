@@ -127,7 +127,10 @@ export const registerPluginRoutes = (app, dependencies) => {
 
   app.get('/api/config/plugins/registry', async (req, res) => {
     try {
-      const { directory } = await resolveOptionalProjectDirectory(req);
+      const { directory, error: directoryError } = await resolveOptionalProjectDirectory(req);
+      if (directoryError) {
+        return res.status(400).json({ error: directoryError });
+      }
       const rawSpecs = (req.query.specs || '').toString();
       const specs = rawSpecs
         ? rawSpecs.split(',').map((spec) => {
