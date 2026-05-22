@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Settings: added a Plugins page to view, add, edit, and remove opencode plugins. Supports `plugin` array entries (npm packages, scoped npm, versioned specs, local paths) with optional options JSON, plus auto-loaded plugin files in `~/.config/opencode/plugins/` and `<project>/.opencode/plugins/`.
+
 ## [1.11.4] - 2026-05-22
 
 - Desktop: Electron is now the desktop release target, with updated macOS menu actions for the right sidebar and terminal dock.

@@ -66,6 +66,22 @@ export {
 } from './mcp.js';
 
 export {
+  listPluginEntries,
+  getPluginEntry,
+  createPluginEntry,
+  updatePluginEntry,
+  deletePluginEntry,
+  listPluginDirFiles,
+  readPluginDirFile,
+  writePluginDirFile,
+  deletePluginDirFile,
+  encodePluginId,
+  decodePluginId,
+  parsePluginRaw,
+  serializePluginEntry,
+} from './plugins.js';
+
+export {
   listSnippets,
   getSnippet,
   createSnippet,
