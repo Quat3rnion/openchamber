@@ -276,7 +276,7 @@ export const PluginsPage: React.FC = () => {
   }
 
   if (selectedFile && draft && draft.mode === 'file') {
-    const isDirty = draft.content !== '' || draft.fileName !== selectedFile.fileName;
+    const isDirty = draft.content !== (readFileCache.current?.get(selectedFile.id) ?? '') || draft.fileName !== selectedFile.fileName;
 
     const handleFileDiscard = () => {
       void (async () => {
