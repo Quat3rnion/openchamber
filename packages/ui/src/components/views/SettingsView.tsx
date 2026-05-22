@@ -142,7 +142,7 @@ export function getSettingsNavIcon(slug: SettingsPageSlug): IconName | null {
     case 'mcp':
       return 'plug-2';
     case 'plugins':
-      return 'plug';
+      return 'code-box';
 
     case 'skills.installed':
       return 'book-open';
