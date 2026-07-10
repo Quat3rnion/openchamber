@@ -607,17 +607,17 @@ export interface GitBranchResult {
   branches: Record<string, GitBranchDetails>;
 }
 
-async function getActiveRemoteBranches(directory: string, fallbackBranches: readonly string[]): Promise<string[]> {
+async function getActiveRemoteBranches(directory: string): Promise<string[]> {
   const remotesResult = await execGit(['remote'], directory);
   if (remotesResult.exitCode !== 0) {
-    return [...fallbackBranches];
+    throw new Error('Failed to fetch remote branches');
   }
 
   const remotes = remotesResult.stdout.split('\n').map((remote) => remote.trim()).filter(Boolean);
   const branchesByRemote = await Promise.all(remotes.map(async (remote) => {
     const result = await execGit(['ls-remote', '--heads', remote], directory);
     if (result.exitCode !== 0) {
-      return [];
+      throw new Error('Failed to fetch remote branches');
     }
 
     return result.stdout.split('\n').flatMap((line) => {
@@ -665,11 +665,9 @@ export async function getGitBranches(directory: string): Promise<GitBranchResult
 
   // Get remote branches
   const remoteRefs = await repo.getBranches({ remote: true });
-  const fallbackRemoteBranches: string[] = [];
   for (const ref of remoteRefs) {
     if (ref.name) {
       const remoteBranchName = `remotes/${ref.name}`;
-      fallbackRemoteBranches.push(remoteBranchName);
       branches[remoteBranchName] = {
         current: false,
         name: remoteBranchName,
@@ -678,7 +676,7 @@ export async function getGitBranches(directory: string): Promise<GitBranchResult
       };
     }
   }
-  all.push(...await getActiveRemoteBranches(directory, fallbackRemoteBranches));
+  all.push(...await getActiveRemoteBranches(directory));
 
   // Add upstream info for HEAD
   if (state.HEAD?.name && state.HEAD?.upstream) {
@@ -706,7 +704,6 @@ async function getGitBranchesRaw(directory: string): Promise<GitBranchResult> {
   const lines = result.stdout.trim().split('\n').filter(Boolean);
   const branches: Record<string, GitBranchDetails> = {};
   const all: string[] = [];
-  const fallbackRemoteBranches: string[] = [];
   let current = '';
 
   for (const line of lines) {
@@ -721,9 +718,7 @@ async function getGitBranchesRaw(directory: string): Promise<GitBranchResult> {
     }
     if (name) {
       const isRemote = name.startsWith('remotes/');
-      if (isRemote) {
-        fallbackRemoteBranches.push(name);
-      } else {
+      if (!isRemote) {
         all.push(name);
       }
       const isCurrent = head === '*';
@@ -738,7 +733,7 @@ async function getGitBranchesRaw(directory: string): Promise<GitBranchResult> {
       };
     }
   }
-  all.push(...await getActiveRemoteBranches(directory, fallbackRemoteBranches));
+  all.push(...await getActiveRemoteBranches(directory));
 
   return { all, current, branches };
 }

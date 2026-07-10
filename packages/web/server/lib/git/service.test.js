@@ -308,6 +308,21 @@ describe('getBranches', () => {
     expect(result.all).toContain('remotes/origin/remote-only');
     expect(result.all).not.toContain('remotes/origin/stale');
   });
+
+  it('rejects when a remote cannot be reached', async () => {
+    if (!canRunGit()) return;
+
+    const repo = createTempDir();
+    runGit(repo, ['init', '-b', 'main']);
+    runGit(repo, ['config', 'user.email', 'test@example.com']);
+    runGit(repo, ['config', 'user.name', 'Test User']);
+    fs.writeFileSync(path.join(repo, 'README.md'), '# Test\n');
+    runGit(repo, ['add', 'README.md']);
+    runGit(repo, ['commit', '-m', 'Initial commit']);
+    runGit(repo, ['remote', 'add', 'broken', path.join(repo, 'missing.git')]);
+
+    await expect(getBranches(repo)).rejects.toThrow('Failed to fetch remote branches');
+  });
 });
 
 // ---------------------------------------------------------------------------
