@@ -9,6 +9,7 @@ import {
   checkoutCommit,
   cherryPick,
   createWorktree,
+  getBranches,
   getStatus,
   removeWorktree,
   resolvePrimaryWorktreeRoot,
@@ -279,6 +280,33 @@ describe('getStatus', () => {
     runGit(repo, ['commit', '-m', 'Initial commit']);
 
     await expect(getStatus(repo)).resolves.toMatchObject({ current: 'main' });
+  });
+});
+
+describe('getBranches', () => {
+  it('returns live remote branches that do not have local tracking refs', async () => {
+    if (!canRunGit()) return;
+
+    const remote = createTempDir();
+    const repo = createTempDir();
+    runGit(remote, ['init', '--bare']);
+    runGit(repo, ['init', '-b', 'main']);
+    runGit(repo, ['config', 'user.email', 'test@example.com']);
+    runGit(repo, ['config', 'user.name', 'Test User']);
+    fs.writeFileSync(path.join(repo, 'README.md'), '# Test\n');
+    runGit(repo, ['add', 'README.md']);
+    runGit(repo, ['commit', '-m', 'Initial commit']);
+    runGit(repo, ['remote', 'add', 'origin', remote]);
+    runGit(repo, ['push', '-u', 'origin', 'main']);
+
+    const head = runGit(repo, ['rev-parse', 'HEAD']).trim();
+    runGit(remote, ['update-ref', 'refs/heads/remote-only', head]);
+    runGit(repo, ['update-ref', 'refs/remotes/origin/stale', head]);
+
+    const result = await getBranches(repo);
+
+    expect(result.all).toContain('remotes/origin/remote-only');
+    expect(result.all).not.toContain('remotes/origin/stale');
   });
 });
 

@@ -3233,13 +3233,11 @@ async function filterActiveRemoteBranches(git, remoteBranches) {
       }
     }));
 
-    return remoteBranches.filter(remoteBranch => {
-      const match = remoteBranch.match(/^remotes\/[^\/]+\/(.+)$/);
-      if (!match) return false;
-      const remoteName = remoteBranch.split('/')[1];
-      const branchName = match[1];
-      return branchesByRemote.get(remoteName)?.has(branchName) ?? false;
-    });
+    return remotes.flatMap((remote) =>
+      Array.from(branchesByRemote.get(remote.name) || [], (branchName) =>
+        `remotes/${remote.name}/${branchName}`
+      )
+    );
   } catch (error) {
     console.warn('Failed to filter active remote branches, returning all:', error.message);
     return remoteBranches;
