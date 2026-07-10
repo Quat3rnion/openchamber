@@ -3193,6 +3193,16 @@ export async function getBranches(directory) {
 
     const allBranches = result.all;
     const activeRemoteBranches = await filterActiveRemoteBranches(git);
+    const branches = { ...result.branches };
+
+    for (const branchName of activeRemoteBranches) {
+      branches[branchName] ??= {
+        current: false,
+        name: branchName,
+        commit: '',
+        label: branchName.replace(/^remotes\//, ''),
+      };
+    }
 
     const filteredAll = [
       ...allBranches.filter(branch => !branch.startsWith('remotes/')),
@@ -3202,7 +3212,7 @@ export async function getBranches(directory) {
     return {
       all: filteredAll,
       current: result.current,
-      branches: result.branches
+      branches
     };
   } catch (error) {
     console.error('Failed to get branches:', error);
@@ -3212,31 +3222,26 @@ export async function getBranches(directory) {
 
 async function filterActiveRemoteBranches(git) {
   const remotes = await git.getRemotes();
-  const branchesByRemote = new Map();
-
-  await Promise.all(remotes.map(async (remote) => {
-    let lsRemoteResult;
+  const branchesByRemote = await Promise.all(remotes.map(async (remote) => {
     try {
-      lsRemoteResult = await git.raw(['ls-remote', '--heads', remote.name]);
-    } catch {
-      throw new Error('Failed to fetch remote branches');
-    }
-    const actualRemoteBranches = new Set();
-    const lines = lsRemoteResult.trim().split('\n');
-    for (const line of lines) {
-      if (line.includes('\trefs/heads/')) {
+      const lsRemoteResult = await git.raw(['ls-remote', '--heads', remote.name]);
+      return lsRemoteResult.trim().split('\n').flatMap((line) => {
+        if (!line.includes('\trefs/heads/')) {
+          return [];
+        }
         const branchName = line.split('\t')[1].replace('refs/heads/', '');
-        actualRemoteBranches.add(branchName);
-      }
+        return [`remotes/${remote.name}/${branchName}`];
+      });
+    } catch {
+      return null;
     }
-    branchesByRemote.set(remote.name, actualRemoteBranches);
   }));
 
-  return remotes.flatMap((remote) =>
-    Array.from(branchesByRemote.get(remote.name) || [], (branchName) =>
-      `remotes/${remote.name}/${branchName}`
-    )
-  );
+  if (remotes.length > 0 && branchesByRemote.every((branches) => branches === null)) {
+    throw new Error('Failed to fetch remote branches');
+  }
+
+  return branchesByRemote.flatMap((branches) => branches ?? []);
 }
 
 export async function createBranch(directory, branchName, options = {}) {
