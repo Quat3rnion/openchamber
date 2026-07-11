@@ -39,7 +39,7 @@ import { cn, hasModifier } from '@/lib/utils';
 import { McpDropdownContent } from '@/components/mcp/McpDropdown';
 import { McpIcon } from '@/components/icons/McpIcon';
 import { ProviderLogo } from '@/components/ui/ProviderLogo';
-import { formatQuotaValueLabel, formatQuotaResetLabel, formatWindowLabel, QUOTA_PROVIDERS, calculatePace, calculateExpectedUsagePercent } from '@/lib/quota';
+import { formatQuotaValueLabel, formatQuotaResetLabel, formatWindowLabel, formatCreditsNote, QUOTA_PROVIDERS, calculatePace, calculateExpectedUsagePercent } from '@/lib/quota';
 import { UsageProgressBar } from '@/components/sections/usage/UsageProgressBar';
 import { PaceIndicator } from '@/components/sections/usage/PaceIndicator';
 import { updateDesktopSettings } from '@/lib/persistence';
@@ -507,6 +507,7 @@ const DesktopServicesMenu = React.memo(function DesktopServicesMenu({
                             : null;
                           const metricLabel = formatQuotaValueLabel(window.valueLabel, displayPercent);
                           const resetLabel = formatQuotaResetLabel(window.resetAt, window.resetAfterFormatted ?? window.resetAtFormatted, timeFormatPreference);
+                          const creditsNote = formatCreditsNote(window.credits);
                           return (
                             <div key={`${group.providerId}-${label}`} className="flex flex-col gap-1.5">
                               <div className="flex min-w-0 items-center justify-between gap-3">
@@ -528,6 +529,9 @@ const DesktopServicesMenu = React.memo(function DesktopServicesMenu({
                                 className="h-1.5"
                                 expectedMarkerPercent={expectedMarker}
                               />
+                              {creditsNote ? (
+                                <span className="truncate typography-micro text-muted-foreground">{creditsNote}</span>
+                              ) : null}
                               {paceInfo && showPredValues ? <PaceIndicator paceInfo={paceInfo} compact /> : null}
                             </div>
                           );
@@ -558,6 +562,7 @@ const DesktopServicesMenu = React.memo(function DesktopServicesMenu({
                                               : calculateExpectedUsagePercent(paceInfo.elapsedRatio))
                                           : null;
                                         const metricLabel = formatQuotaValueLabel(window.valueLabel, displayPercent);
+                                        const creditsNote = formatCreditsNote(window.credits);
                                         return (
                                           <div key={`${group.providerId}-${modelName}`} className="flex flex-col gap-1.5">
                                             <div className="flex min-w-0 items-center justify-between gap-3">
@@ -572,6 +577,9 @@ const DesktopServicesMenu = React.memo(function DesktopServicesMenu({
                                               className="h-1.5"
                                               expectedMarkerPercent={expectedMarker}
                                             />
+                                            {creditsNote ? (
+                                              <span className="truncate typography-micro text-muted-foreground">{creditsNote}</span>
+                                            ) : null}
                                             {paceInfo && showPredValues ? <PaceIndicator paceInfo={paceInfo} compact /> : null}
                                           </div>
                                         );
@@ -2515,6 +2523,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     : null;
                                   const metricLabel = formatQuotaValueLabel(window.valueLabel, displayPercent);
                                   const resetLabel = formatQuotaResetLabel(window.resetAt, window.resetAfterFormatted ?? window.resetAtFormatted, timeFormatPreference);
+                                  const creditsNote = formatCreditsNote(window.credits);
                                   return (
                                     <div key={`${group.providerId}-${label}`} className="flex flex-col gap-1.5">
                                       <div className="flex min-w-0 items-center justify-between gap-3">
@@ -2536,6 +2545,9 @@ export const Header: React.FC<HeaderProps> = ({
                                         className="h-1.5"
                                         expectedMarkerPercent={expectedMarker}
                                       />
+                                      {creditsNote ? (
+                                        <span className="truncate typography-micro text-muted-foreground">{creditsNote}</span>
+                                      ) : null}
                                       {paceInfo && showPredValues ? (
                                         <PaceIndicator paceInfo={paceInfo} compact />
                                       ) : null}
@@ -2579,6 +2591,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                       : calculateExpectedUsagePercent(paceInfo.elapsedRatio))
                                                   : null;
                                                 const metricLabel = formatQuotaValueLabel(window.valueLabel, displayPercent);
+                                                const creditsNote = formatCreditsNote(window.credits);
                                                 return (
                                                   <div key={`${group.providerId}-${modelName}`} className="flex flex-col gap-1.5">
                                                     <div className="flex min-w-0 items-center justify-between gap-3">
@@ -2593,6 +2606,9 @@ export const Header: React.FC<HeaderProps> = ({
                                                       className="h-1.5"
                                                       expectedMarkerPercent={expectedMarker}
                                                     />
+                                                    {creditsNote ? (
+                                                      <span className="truncate typography-micro text-muted-foreground">{creditsNote}</span>
+                                                    ) : null}
                                                     {paceInfo && showPredValues ? (
                                                       <PaceIndicator paceInfo={paceInfo} compact />
                                                     ) : null}
